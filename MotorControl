@@ -1,0 +1,72 @@
+`timescale 1ns / 1ps
+ module case_statement (
+ input clock,sw0,sw1,sw2,sw3,sw4,SW14, SW15,
+ output reg IN1, reg IN2, reg IN3, reg IN4, 
+ output EN_A, EN_B
+);
+  reg r_VAL_1 = 1'b0;
+   reg [7:0] dutyCycle=0;   
+
+
+     reg [18:0] counter;      //counter for PWM signal
+   reg [18:0] width;        //width of PWM
+   reg [2:0] IPS;       //one register for all three IPS 
+   reg speed; 
+   reg temp_EN_A;       //temp PWM
+   reg temp_EN_B;       //temp PWM
+   reg [1:0] duty;
+   reg [1:0] direction; 
+ 
+
+always @(*) begin       //converts direction and speed into output form for the driver board
+        case (speed)        //duty cycle from speed
+            2'd0 : width = 19'd0;       //0% duty cycle, stop
+            2'd1 : begin
+                if (duty == 2'b00) width = 19'd209715;  //40% duty cycle 
+                else if (duty == 2'b01) width = 19'd314573; //60% duty cycle
+                else if (duty == 2'b10) width = 19'd419430; //80% duty cycle
+                else if (duty == 2'b11) width = 19'd524287; //100% duty cycle
+            end
+            default : width = 19'd0;
+        endcase
+        
+        case (direction)       //sets the 4 input pins on the driver board 
+            2'd0 : begin IN1 = 1; IN2 = 0; IN3 = 0; IN4 = 1; end        //forward
+            2'd1 : begin IN1 = 0; IN2 = 1; IN3 = 1; IN4 = 0; end     //backward
+            2'd2 : begin IN1 = 1; IN2 = 0; IN3 = 1; IN4 = 0; end     //rotate left
+            2'd3 : begin IN1 = 0; IN2 = 1; IN3 = 0; IN4 = 1; end     //rotate right
+            default : begin IN1 = 1; IN2 = 0; IN3 = 0; IN4 = 1; end        //forward
+        endcase
+    end
+
+ 
+   always @(posedge clock) begin
+        counter <= counter +1;      //continously increment counter
+        
+        if(counter < width) begin       //output high as long as the count is less than the width
+            temp_EN_A <= 1;
+            temp_EN_B <= 1;
+        end else begin
+            temp_EN_A <= 0;
+            temp_EN_B <= 0;
+        end
+        
+
+    end    
+    always @(posedge clock) begin  
+            duty[0] = SW14;     //assigning switches on the Basys to control the duty cycle register
+            duty[1] = SW15;   
+
+            if (sw0==1) begin  
+            if (sw1==1) begin speed = 2'd1; direction = 2'd0; end
+             if (sw2==1) begin speed = 2'd1; direction = 2'd1; end
+              if (sw3==1) begin speed = 2'd1; direction = 2'd2; end
+               if (sw4==1) begin speed = 2'd1; direction = 2'd3; end
+              
+            end
+
+            else if (sw0==0) speed = 2'd0; 
+end
+
+    assign EN_A = temp_EN_A;
+    assign EN_B = temp_EN_B;
