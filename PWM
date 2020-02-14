@@ -1,0 +1,32 @@
+`timescale 1ns / 1ps
+
+module PWMTopModule(
+
+input clk,sw0,sw1,sw2,sw3,sw4,sw5,
+output led0,led1,led2,led3,out1,led5
+
+    );
+reg [7:0] dutyCycle=0;   
+reg [7:0] counter=0;
+always@(posedge clk) begin
+    if(counter<100) counter<=counter+1;
+    else counter<=0;
+    if (sw0==1) dutyCycle<=0;
+    if (sw1==1) dutyCycle<=10;
+    if (sw2==1) dutyCycle<=25;
+    if (sw3==1) dutyCycle<=50;
+    if (sw4==1) dutyCycle<=75;
+    if (sw5==1) dutyCycle<=101;
+    end
+
+assign out1= (counter<dutyCycle) ? 1:0;
+assign led0 = (counter<2) ? 1:0;
+assign led1 = (counter<10) ? 1:0;
+assign led2 = (counter<20) ? 1:0;
+assign led3 = (counter<50) ? 1:0;
+assign led4 = (counter<101) ?1:0;
+assign led5= (counter<dutyCycle) ? 1:0;
+
+
+endmodule
+
